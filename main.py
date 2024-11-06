@@ -30,6 +30,7 @@ cat = Image.open("imgs/강고양.jpeg").resize((600,800))
 yellowbox = ImageTk.PhotoImage(Image.open("imgs/yellowbox.jpg").resize((400, 400)))
 pinkbox = ImageTk.PhotoImage(Image.open("imgs/pinkbox.jpg").resize((400, 400)))
 
+
 mainImageAlpha = 0.0
 faded_image = ImageTk.PhotoImage(cat)
 mainImage = Label(msf, image=faded_image, bg="black")
