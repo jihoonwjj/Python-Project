@@ -15,10 +15,13 @@ win.geometry("1530x1280")
 win.resizable(False, False)
 
 # 프레임 생성
-msf = Frame(win, width=1550, height=1280, relief="solid", bd=0)
+msf = Frame(win, width=1550, height=1280, relief="solid", bd=0, bg="black")
+ms = Frame(win, width=1550, height=1280, relief="solid", bd=0)
 
 # 프레임 크기 고정
 msf.grid_propagate(False)
+ms.grid_propagate(False)
+
 msf.place(x=0, y=0)
 msf.tkraise()
 
@@ -29,8 +32,8 @@ pinkbox = ImageTk.PhotoImage(Image.open("imgs/pinkbox.jpg").resize((400, 400)))
 
 mainImageAlpha = 0.0
 faded_image = ImageTk.PhotoImage(cat)
-mainImage = Label(msf, image=faded_image)
-mainImage.place(x=400,y=200)
+mainImage = Label(msf, image=faded_image, bg="black")
+mainImage.place(x=500,y=125)
 
 # 로직
 
@@ -55,6 +58,9 @@ def fadeout():
         win.after(100, fadeout)
     else:
         mainImage.config(image="")
+        msf.destory()
 
 fadein()
+
+# 메인루프
 win.mainloop()
