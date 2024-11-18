@@ -8,6 +8,7 @@ def color_gradient(ratio):
 
 # 타이머 업데이트 함수
 def update_timer():
+
     global remaining_time, timer_id
 
     if remaining_time > 0:
@@ -21,7 +22,7 @@ def update_timer():
         # 중앙 직사각형
         canvas.coords(timer_rect, timer_x + radius, timer_y, timer_x + radius + current_length, timer_y + timer_height)
 
-        # 오른쪽 끝 원의 위치 조정
+
         canvas.coords(right_circle, timer_x + radius + current_length - radius, timer_y, 
                       timer_x + radius + current_length + radius, timer_y + timer_height)
 
