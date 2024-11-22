@@ -37,15 +37,11 @@ htp.place_forget()
 canvas = Canvas(mg, width=400,height=100,bg="white")
 canvas.place(x=500,y=700)
 
-# canvas = Canvas(mg, width=1580, height=1280, bg="white")
-# canvas.place(x=0,y=0)
-
-total_time = 25
+total_time = 15
 remaining_time = total_time
 timer_width = 350
 timer_height = 30
 radius = timer_height // 2
-# timer_x, timer_y = 500, 700
 timer_x, timer_y = 0, 35
 timer_id = None
 
