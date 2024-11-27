@@ -49,12 +49,24 @@ timer_id = None
 
 button_images = list()
 
+def pattern_difference():
+
+    global result_label
+
+    if mypattern == pattern:
+        result_label = "정답"
+    else:
+        result_label = "아님"
+
+    Label(win, text=result_label, font=("Arial", 20), fg="red").pack(pady=20)
+
+
 def color_gradient(ratio):
     red = int(255 * (1 - ratio))
     green = int(255 * ratio)
     return f"#{red:02x}{green:02x}00"
 
-def update_timer():
+def update_timer(callback=None):
     
     global remaining_time, timer_id
 
@@ -70,13 +82,16 @@ def update_timer():
         canvas.coords(right_circle, timer_x + radius + current_length - radius, timer_y, 
                         timer_x + radius + current_length + radius, timer_y + timer_height)
 
-        canvas.itemconfig(timer_rect, fill=color)
-        canvas.itemconfig(left_circle, fill=color)
-        canvas.itemconfig(right_circle, fill=color)
+        canvas.itemconfig(timer_rect, fill=color, state='normal')
+        canvas.itemconfig(left_circle, fill=color, state='normal')
+        canvas.itemconfig(right_circle, fill=color, state='normal')
 
-        timer_id = win.after(10, update_timer)
+        timer_id = win.after(10, update_timer, callback)
 
-def start_timer():
+    else:
+        if callback: callback()
+
+def start_timer(callback=None):
 
     global remaining_time, timer_id
 
@@ -94,7 +109,7 @@ def start_timer():
     canvas.itemconfig(left_circle, fill=initial_color)
     canvas.itemconfig(right_circle, fill=initial_color)
 
-    update_timer()
+    update_timer(callback)
 
 initial_color = color_gradient(1)
 timer_rect = canvas.create_rectangle(timer_x + radius, timer_y, timer_x + timer_width - radius, timer_y + timer_height, fill=initial_color, outline="")
@@ -106,7 +121,7 @@ right_circle = canvas.create_oval(timer_x + timer_width - 2 * radius, timer_y, t
 ramenBgm = pygame.mixer.Sound("bgms/슈의 라면가게 브금.wav")
 meownga = pygame.mixer.Sound("bgms/meow-meow-n-gga.wav")
 kang = pygame.mixer.Sound("bgms/[뉴진스] 언니들만 계속 쳐다보는 강해rrr륀.wav")
-nintendo = pygame.mixer.Sound("bgms/nintendo.wav")
+nintendo = pygame.mixer.Sound("bgms/Nintendo Wii Mii 선택 화면 브금.wav")
 countdownbgm = pygame.mixer.Sound("bgms/Countdown 3 seconds timer.wav")
 puzzle = pygame.mixer.Sound("bgms/레이튼 교수와 이상한 마을 OST - 05 수수께끼.wav")
 spray = pygame.mixer.Sound("bgms/spray.wav")
@@ -130,7 +145,6 @@ mainImage = Label(msf, image=faded_image, bg="black")
 mainImage.place(x=500,y=125)
 
 boxcolors = ["black", "hot pink", "deep pink", "red", "purple", "yellow", "dark green", "cyan", "navy"]
-pattern = list()
 
 # 로직
 
@@ -138,22 +152,25 @@ pattern = list()
 
 c = ImageTk.PhotoImage(Image.open("imgs/timer.png").resize((100,100)))
 
-def boxchangecolor(button):
-    global usedcolors
+def boxchangecolor(button, i, j):
+    global usedcolors, mypattern
     spray.play()
     current_index = button_states[button]
     next_index = (current_index + 1) % len(usedcolors)
-    button.config(bg=usedcolors[next_index],image="",width=15, height=7, padx=8, pady=9)
+    button.config(bg=usedcolors[next_index],image="",width=11, height=5, padx=12, pady=12, bd=2)
+    mypattern[i][j] = usedcolors[next_index]
     button_states[button] = next_index
 
 button_states = dict()
 buttons = list()
 mypattern = list()
+pattern = list()
 
 def easygamemain():
     global button_images, emptybox, mypattern
     button_images.clear()
-    canvas.delete("all")
+
+    mypattern = [[0 for _ in range(3)] for _ in range(3)]
     for children in boxes.winfo_children(): children.destroy()
     for i in range(3):
         count = 0
@@ -165,18 +182,23 @@ def easygamemain():
             currentbox = globals()["b{}".format(count)] = Button(boxes,image=img, relief="solid", bd=1, bg="gray",cursor="spraycan")
             currentbox.grid(row=i, column=j, padx=5, pady=5)
             button_states[currentbox] = 0
-            currentbox.config(command=lambda btn=currentbox: boxchangecolor(btn))
+            currentbox.config(command=lambda btn=currentbox, x=i, y=j: boxchangecolor(btn, x, y))
             buttons.append(currentbox)
+    nintendo.stop()
+    puzzle.play(-1)
+    start_timer(lambda: pattern_difference())
 
 def easygame():
 
-    global boxcolors, pattern, c, usedcolors
-    start_timer()
+    global boxcolors, c, usedcolors, pattern
+
+    pattern = [[0 for _ in range(3)] for _ in range(3)]
+
     countdownbgm.play()
+    start_timer()
     boxes.config(width=505, height=505)
     clock = Label(mg, image=c)
     clock.place(x=900,y=700)
-    pattern.clear()
     usedcolors = list()
 
     usedcolors.clear()
@@ -195,6 +217,7 @@ def easygame():
     for i in range(3):  
         for j in range(3):
             tmp = random.choice(usedcolors)
+            pattern[i][j] = tmp
             if tmp == "deep pink": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
             elif tmp == "black": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
             elif tmp == "hot pink": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
@@ -219,7 +242,6 @@ def normalgame():
     boxes.config(width=505, height=505)
     clock = Label(mg, image=c)
     clock.place(x=900,y=700)
-    pattern.clear()
     usedcolors = list()
 
     usedcolors.clear()
@@ -251,6 +273,7 @@ def normalgame():
     win.after(total_time*1000+500, easygamemain)
 
 # 하드 모드
+
 def hardgame():
 
     global boxcolors
