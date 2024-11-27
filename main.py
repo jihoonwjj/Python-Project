@@ -34,40 +34,69 @@ htp.place(x=300,y=40)
 htp.place_forget()
 
 # 캔버스
-canvas = Canvas(mg, width=400,height=100,bg="white",bd=0)
+canvas = Canvas(mg, width=400,height=100,bg="white")
 canvas.place(x=500,y=700)
 
-def color_gradient(ratio):
-    red = int(255 * (1-ratio))
-    green = int(255 * ratio)
-    return (red, green, 0)
-
-timer_total_time = 10
-timer_remaining_time = timer_total_time
-timer_length = 400
+total_time = 15
+remaining_time = total_time
+timer_width = 350
 timer_height = 30
-timerx, timery = 200, 250
 radius = timer_height // 2
+timer_x, timer_y = 0, 35
+timer_id = None
 
-clock = pygame.time.Clock()
+def color_gradient(ratio):
+    red = int(255 * (1 - ratio))
+    green = int(255 * ratio)
+    return f"#{red:02x}{green:02x}00"
 
-def timer():
+def update_timer():
     
-    if timer_remaining_time > 0.5:
-        if current_length > 0:
-            
-            ratio = timer_remaining_time / timer_total_time
-            current_length = int(timer_length * ratio)
-            color = color_gradient(ratio)
+    global remaining_time, timer_id
 
-            pygame.draw.rect(mg, color, (timerx + radius, timery, current_length - 2 * radius, timer_height))
-            
-            pygame.draw.circle(mg, color, (timerx + radius, timery + radius), radius)
-            
-            pygame.draw.circle(mg, color, (timerx + current_length - radius, timery + radius), radius)
-        timer_remaining_time -= 0.01
+    if remaining_time > 0:
+        remaining_time -= 0.01
+        ratio = remaining_time / total_time
+
+        current_length = int(timer_width * ratio)
+        color = color_gradient(ratio)
+
+        canvas.coords(timer_rect, timer_x + radius, timer_y, timer_x + radius + current_length, timer_y + timer_height)
+
+        canvas.coords(right_circle, timer_x + radius + current_length - radius, timer_y, 
+                        timer_x + radius + current_length + radius, timer_y + timer_height)
+
+        canvas.itemconfig(timer_rect, fill=color)
+        canvas.itemconfig(left_circle, fill=color)
+        canvas.itemconfig(right_circle, fill=color)
+
+        timer_id = win.after(10, update_timer)
     else:
         exitProject()
+
+def start_timer():
+    global remaining_time, timer_id
+
+    if timer_id is not None:
+        win.after_cancel(timer_id)
+
+    remaining_time = total_time
+
+    canvas.coords(timer_rect, timer_x + radius, timer_y, timer_x + timer_width - radius, timer_y + timer_height)
+    canvas.coords(left_circle, timer_x, timer_y, timer_x + 2 * radius, timer_y + timer_height)
+    canvas.coords(right_circle, timer_x + timer_width - 2 * radius, timer_y, timer_x + timer_width, timer_y + timer_height)
+
+    initial_color = color_gradient(1)
+    canvas.itemconfig(timer_rect, fill=initial_color)
+    canvas.itemconfig(left_circle, fill=initial_color)
+    canvas.itemconfig(right_circle, fill=initial_color)
+
+    update_timer()
+
+initial_color = color_gradient(1)
+timer_rect = canvas.create_rectangle(timer_x + radius, timer_y, timer_x + timer_width - radius, timer_y + timer_height, fill=initial_color, outline="")
+left_circle = canvas.create_oval(timer_x, timer_y, timer_x + 2 * radius, timer_y + timer_height, fill=initial_color, outline="")
+right_circle = canvas.create_oval(timer_x + timer_width - 2 * radius, timer_y, timer_x + timer_width, timer_y + timer_height, fill=initial_color, outline="")
 
 # wav 로드
 ramenBgm = pygame.mixer.Sound("bgms/슈의 라면가게 브금.wav")
@@ -112,8 +141,8 @@ c = ImageTk.PhotoImage(Image.open("imgs/timer.png").resize((100,100)))
 def easygame():
 
     global boxcolors, p, b, r, lp, y, pur, pattern, timer_remaining_time, c
+    start_timer()
     timer_remaining_time = 30
-    timer()
     countdownbgm.play()
     boxes.config(width=505, height=505)
     clock = Label(mg, image=c)
@@ -222,7 +251,7 @@ def exitProject():
     
     ramenBgm.stop()
     meownga.play()
-    label = Label(ms, image=blackcat)
+    label = Label(win, image=blackcat)
     label.place(x=500,y=0)
     win.after(1205, exit)
 
@@ -278,4 +307,3 @@ fadeout()
 
 # 메인루프
 win.mainloop()
-pygame.display.flip()
