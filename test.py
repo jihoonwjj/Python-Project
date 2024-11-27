@@ -236,9 +236,12 @@ def normalgamemain():
     pass
 
 def normalgame():
-    global boxcolors, pattern, c, usedcolors
-    start_timer()
+    global boxcolors, c, usedcolors, pattern
+
+    pattern = [[0 for _ in range(5)] for _ in range(5)]
+
     countdownbgm.play()
+    start_timer()
     boxes.config(width=505, height=505)
     clock = Label(mg, image=c)
     clock.place(x=900,y=700)
@@ -250,16 +253,17 @@ def normalgame():
     mg.place(x=0,y=0)
     boxes.grid(row=0, column=1, padx=500, pady=150)
 
-    box = ImageTk.PhotoImage(emptybox.resize((80,80)))
+    box = ImageTk.PhotoImage(emptybox.resize((150,150)))
 
-    for _ in range(5):
+    for _ in range(3):
         chosencolor = random.choice(chamjo)
         usedcolors.append(chosencolor)
         chamjo.remove(chosencolor)
     
-    for i in range(5):  
-        for j in range(5):
+    for i in range(3):  
+        for j in range(3):
             tmp = random.choice(usedcolors)
+            pattern[i][j] = tmp
             if tmp == "deep pink": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
             elif tmp == "black": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
             elif tmp == "hot pink": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
