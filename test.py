@@ -53,13 +53,18 @@ def pattern_difference():
 
     global result_label
 
+    puzzle.stop()
+
     if mypattern == pattern:
         result_label = "정답"
+        puzzlesolved.play()
+
     else:
         result_label = "아님"
-
-    Label(win, text=result_label, font=("Arial", 20), fg="red").pack(pady=20)
-
+        puzzleunsolved.play()
+    
+    label = Label(win, text=result_label, font=("궁서체", 20), fg="red")
+    win.after(2500, label.pack(pady=20))
 
 def color_gradient(ratio):
     red = int(255 * (1 - ratio))
@@ -125,6 +130,8 @@ nintendo = pygame.mixer.Sound("bgms/Nintendo Wii Mii 선택 화면 브금.wav")
 countdownbgm = pygame.mixer.Sound("bgms/Countdown 3 seconds timer.wav")
 puzzle = pygame.mixer.Sound("bgms/레이튼 교수와 이상한 마을 OST - 05 수수께끼.wav")
 spray = pygame.mixer.Sound("bgms/spray.wav")
+puzzlesolved = pygame.mixer.Sound("bgms/puzzle solved.wav")
+puzzleunsolved = pygame.mixer.Sound("bgms/puzzle unsovled.wav")
 
 # 이미지 로드
 
@@ -184,6 +191,7 @@ def easygamemain():
             button_states[currentbox] = 0
             currentbox.config(command=lambda btn=currentbox, x=i, y=j: boxchangecolor(btn, x, y))
             buttons.append(currentbox)
+
     nintendo.stop()
     puzzle.play(-1)
     start_timer(lambda: pattern_difference())
