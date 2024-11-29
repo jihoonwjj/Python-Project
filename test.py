@@ -143,6 +143,7 @@ easy = ImageTk.PhotoImage(Image.open("imgs/easy.jpeg").resize((400,300)))
 normal = ImageTk.PhotoImage(Image.open("imgs/normal.jpeg").resize((400,300)))
 hard = ImageTk.PhotoImage(Image.open("imgs/hard.jpeg").resize((400,300)))
 settingbutton = ImageTk.PhotoImage(Image.open("imgs/setting.png").resize((100,100)))
+howtoplay = ImageTk.PhotoImage(Image.open("imgs/tutorial.png").resize((850,650)))
 
 # 페이드 이미지
 
@@ -154,8 +155,6 @@ mainImage.place(x=500,y=125)
 boxcolors = ["black", "hot pink", "deep pink", "red", "purple", "yellow", "dark green", "cyan", "navy"]
 
 # 로직
-
-# 이지 모드
 
 c = ImageTk.PhotoImage(Image.open("imgs/timer.png").resize((100,100)))
 
@@ -330,7 +329,8 @@ def choosingdifficulty():
 def tutorial():
     htp.place(x=300,y=40)
     htp.tkraise()
-    Button(htp, image=cancelbutton, bg="gray", command=lambda: htp.place_forget(), cursor="dot").place(x=880, y=30)
+    Label(htp, image=howtoplay).place(x=50,y=50)
+    Button(htp, image=cancelbutton, bg="gray", command=lambda: htp.place_forget(), cursor="hand2").place(x=880, y=30)
 
 # 나가기
 
@@ -388,10 +388,7 @@ def mainScreen():
 win.after(1000, kang.play)
 win.after(3700, kang.stop)
 
-## juseok for test
-# fadein()
-
-fadeout()
+fadein()
 
 # 메인루프
 win.mainloop()
