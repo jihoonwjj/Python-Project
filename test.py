@@ -10,7 +10,7 @@ win.attributes('-fullscreen', True)
 win.title("Brain Test")
 win.option_add("*Font", "함초롬바탕확장")
 win.bind("<Escape>", lambda event: win.attributes("-fullscreen", False))
-win.geometry("1530x1280")
+win.geometry("1520x1280")
 
 # 앱 크기 설정 불가
 win.resizable(False, False)
