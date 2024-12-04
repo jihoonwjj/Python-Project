@@ -10,7 +10,7 @@ win.attributes('-fullscreen', True)
 win.title("Brain Test")
 win.option_add("*Font", "함초롬바탕확장")
 win.bind("<Escape>", lambda event: win.attributes("-fullscreen", False))
-win.geometry("1530x1280")
+win.geometry("1520x1280")
 
 # 앱 크기 설정 불가
 win.resizable(False, False)
@@ -53,13 +53,18 @@ def pattern_difference():
 
     global result_label
 
+    puzzle.stop()
+
     if mypattern == pattern:
         result_label = "정답"
+        puzzlesolved.play()
+
     else:
         result_label = "아님"
-
-    Label(win, text=result_label, font=("Arial", 20), fg="red").pack(pady=20)
-
+        puzzleunsolved.play()
+    
+    label = Label(win, text=result_label, font=("궁서체", 20), fg="red")
+    win.after(2500, label.pack(pady=20))
 
 def color_gradient(ratio):
     red = int(255 * (1 - ratio))
@@ -125,6 +130,8 @@ nintendo = pygame.mixer.Sound("bgms/Nintendo Wii Mii 선택 화면 브금.wav")
 countdownbgm = pygame.mixer.Sound("bgms/Countdown 3 seconds timer.wav")
 puzzle = pygame.mixer.Sound("bgms/레이튼 교수와 이상한 마을 OST - 05 수수께끼.wav")
 spray = pygame.mixer.Sound("bgms/spray.wav")
+puzzlesolved = pygame.mixer.Sound("bgms/puzzle solved.wav")
+puzzleunsolved = pygame.mixer.Sound("bgms/puzzle unsovled.wav")
 
 # 이미지 로드
 
@@ -136,6 +143,7 @@ easy = ImageTk.PhotoImage(Image.open("imgs/easy.jpeg").resize((400,300)))
 normal = ImageTk.PhotoImage(Image.open("imgs/normal.jpeg").resize((400,300)))
 hard = ImageTk.PhotoImage(Image.open("imgs/hard.jpeg").resize((400,300)))
 settingbutton = ImageTk.PhotoImage(Image.open("imgs/setting.png").resize((100,100)))
+howtoplay = ImageTk.PhotoImage(Image.open("imgs/tutorial.png").resize((850,650)))
 
 # 페이드 이미지
 
@@ -147,8 +155,6 @@ mainImage.place(x=500,y=125)
 boxcolors = ["black", "hot pink", "deep pink", "red", "purple", "yellow", "dark green", "cyan", "navy"]
 
 # 로직
-
-# 이지 모드
 
 c = ImageTk.PhotoImage(Image.open("imgs/timer.png").resize((100,100)))
 
@@ -184,6 +190,7 @@ def easygamemain():
             button_states[currentbox] = 0
             currentbox.config(command=lambda btn=currentbox, x=i, y=j: boxchangecolor(btn, x, y))
             buttons.append(currentbox)
+
     nintendo.stop()
     puzzle.play(-1)
     start_timer(lambda: pattern_difference())
@@ -322,7 +329,8 @@ def choosingdifficulty():
 def tutorial():
     htp.place(x=300,y=40)
     htp.tkraise()
-    Button(htp, image=cancelbutton, bg="gray", command=lambda: htp.place_forget(), cursor="dot").place(x=880, y=30)
+    Label(htp, image=howtoplay).place(x=50,y=50)
+    Button(htp, image=cancelbutton, bg="gray", command=lambda: htp.place_forget(), cursor="hand2").place(x=880, y=30)
 
 # 나가기
 
@@ -380,10 +388,7 @@ def mainScreen():
 win.after(1000, kang.play)
 win.after(3700, kang.stop)
 
-## juseok for test
-# fadein()
-
-fadeout()
+fadein()
 
 # 메인루프
 win.mainloop()

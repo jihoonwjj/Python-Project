@@ -10,9 +10,7 @@ win.attributes('-fullscreen', True)
 win.title("Brain Test")
 win.option_add("*Font", "함초롬바탕확장")
 win.bind("<Escape>", lambda event: win.attributes("-fullscreen", False))
-win.geometry("1530x1280")
-
-# 앱 크기 설정 불가
+win.geometry("1520x1280")
 win.resizable(False, False)
 
 # 프레임 생성
@@ -42,15 +40,36 @@ remaining_time = total_time
 timer_width = 350
 timer_height = 30
 radius = timer_height // 2
-timer_x, timer_y = 0, 35
+timer_x, timer_y = 5, 35
 timer_id = None
+
+# 이미지 참조
+
+button_images = list()
+
+def pattern_difference():
+
+    global result_label
+
+    puzzle.stop()
+
+    if mypattern == pattern:
+        result_label = "정답"
+        puzzlesolved.play()
+
+    else:
+        result_label = "아님"
+        puzzleunsolved.play()
+    
+    label = Label(win, text=result_label, font=("궁서체", 20), fg="red")
+    win.after(2500, label.pack(pady=20))
 
 def color_gradient(ratio):
     red = int(255 * (1 - ratio))
     green = int(255 * ratio)
     return f"#{red:02x}{green:02x}00"
 
-def update_timer():
+def update_timer(callback=None):
     
     global remaining_time, timer_id
 
@@ -66,15 +85,17 @@ def update_timer():
         canvas.coords(right_circle, timer_x + radius + current_length - radius, timer_y, 
                         timer_x + radius + current_length + radius, timer_y + timer_height)
 
-        canvas.itemconfig(timer_rect, fill=color)
-        canvas.itemconfig(left_circle, fill=color)
-        canvas.itemconfig(right_circle, fill=color)
+        canvas.itemconfig(timer_rect, fill=color, state='normal')
+        canvas.itemconfig(left_circle, fill=color, state='normal')
+        canvas.itemconfig(right_circle, fill=color, state='normal')
 
-        timer_id = win.after(10, update_timer)
+        timer_id = win.after(10, update_timer, callback)
+
     else:
-        exitProject()
+        if callback: callback()
 
-def start_timer():
+def start_timer(callback=None):
+
     global remaining_time, timer_id
 
     if timer_id is not None:
@@ -91,7 +112,7 @@ def start_timer():
     canvas.itemconfig(left_circle, fill=initial_color)
     canvas.itemconfig(right_circle, fill=initial_color)
 
-    update_timer()
+    update_timer(callback)
 
 initial_color = color_gradient(1)
 timer_rect = canvas.create_rectangle(timer_x + radius, timer_y, timer_x + timer_width - radius, timer_y + timer_height, fill=initial_color, outline="")
@@ -99,28 +120,28 @@ left_circle = canvas.create_oval(timer_x, timer_y, timer_x + 2 * radius, timer_y
 right_circle = canvas.create_oval(timer_x + timer_width - 2 * radius, timer_y, timer_x + timer_width, timer_y + timer_height, fill=initial_color, outline="")
 
 # wav 로드
+
 ramenBgm = pygame.mixer.Sound("bgms/슈의 라면가게 브금.wav")
 meownga = pygame.mixer.Sound("bgms/meow-meow-n-gga.wav")
 kang = pygame.mixer.Sound("bgms/[뉴진스] 언니들만 계속 쳐다보는 강해rrr륀.wav")
-nintendo = pygame.mixer.Sound("bgms/nintendo.wav")
+nintendo = pygame.mixer.Sound("bgms/Nintendo Wii Mii 선택 화면 브금.wav")
 countdownbgm = pygame.mixer.Sound("bgms/Countdown 3 seconds timer.wav")
+puzzle = pygame.mixer.Sound("bgms/레이튼 교수와 이상한 마을 OST - 05 수수께끼.wav")
+spray = pygame.mixer.Sound("bgms/spray.wav")
+puzzlesolved = pygame.mixer.Sound("bgms/puzzle solved.wav")
+puzzleunsolved = pygame.mixer.Sound("bgms/puzzle unsovled.wav")
 
 # 이미지 로드
 
 cat = Image.open("imgs/강고양.jpeg").resize((600,800))
 blackcat = ImageTk.PhotoImage(Image.open("imgs/black cat.jpg").resize((600,800)))
-yellowbox = Image.open("imgs/yellowbox.jpg")
-pinkbox = Image.open("imgs/pinkbox.jpg")
-purplebox = Image.open("imgs/purplebox.png")
-lightpinkbox = Image.open("imgs/lightpinkbox.png")
-redbox = Image.open("imgs/redbox.png")
-blackbox = Image.open("imgs/blackbox.png")
 emptybox = Image.open("imgs/emptybox.png")
 cancelbutton = ImageTk.PhotoImage(Image.open("imgs/cancelbutton.png").resize((100,100)))
 easy = ImageTk.PhotoImage(Image.open("imgs/easy.jpeg").resize((400,300)))
 normal = ImageTk.PhotoImage(Image.open("imgs/normal.jpeg").resize((400,300)))
 hard = ImageTk.PhotoImage(Image.open("imgs/hard.jpeg").resize((400,300)))
 settingbutton = ImageTk.PhotoImage(Image.open("imgs/setting.png").resize((100,100)))
+howtoplay = ImageTk.PhotoImage(Image.open("imgs/tutorial.png").resize((850,650)))
 
 # 페이드 이미지
 
@@ -129,36 +150,69 @@ faded_image = ImageTk.PhotoImage(cat)
 mainImage = Label(msf, image=faded_image, bg="black")
 mainImage.place(x=500,y=125)
 
-boxcolors = ["black", "lightpink", "pink", "red", "purple", "yellow"]
-pattern = list()
+boxcolors = ["black", "hot pink", "deep pink", "red", "purple", "yellow", "dark green", "cyan", "navy"]
 
 # 로직
 
-# 이지 모드
-
 c = ImageTk.PhotoImage(Image.open("imgs/timer.png").resize((100,100)))
+
+def boxchangecolor(button, i, j):
+    global usedcolors, mypattern
+    spray.play()
+    current_index = button_states[button]
+    next_index = (current_index + 1) % len(usedcolors)
+    button.config(bg=usedcolors[next_index],image="",width=11, height=5, padx=12, pady=12, bd=2)
+    mypattern[i][j] = usedcolors[next_index]
+    button_states[button] = next_index
+
+button_states = dict()
+buttons = list()
+mypattern = list()
+pattern = list()
+
+def easygamemain():
+    global button_images, emptybox, mypattern
+    button_images.clear()
+
+    mypattern = [[0 for _ in range(3)] for _ in range(3)]
+    for children in boxes.winfo_children(): children.destroy()
+    for i in range(3):
+        count = 0
+        for j in range(3):
+            count += 1
+            img = ImageTk.PhotoImage(emptybox.resize((150,150)))
+            button_images.append(img)
+
+            currentbox = globals()["b{}".format(count)] = Button(boxes,image=img, relief="solid", bd=1, bg="gray",cursor="spraycan")
+            currentbox.grid(row=i, column=j, padx=5, pady=5)
+            button_states[currentbox] = 0
+            currentbox.config(command=lambda btn=currentbox, x=i, y=j: boxchangecolor(btn, x, y))
+            buttons.append(currentbox)
+
+    nintendo.stop()
+    puzzle.play(-1)
+    start_timer(lambda: pattern_difference())
 
 def easygame():
 
-    global boxcolors, p, b, r, lp, y, pur, pattern, timer_remaining_time, c
-    start_timer()
-    timer_remaining_time = 30
+    global boxcolors, c, usedcolors, pattern
+
+    pattern = [[0 for _ in range(3)] for _ in range(3)]
+
     countdownbgm.play()
+    start_timer()
     boxes.config(width=505, height=505)
     clock = Label(mg, image=c)
     clock.place(x=900,y=700)
+    usedcolors = list()
 
-    chamjo = boxcolors
+    usedcolors.clear()
+    chamjo = boxcolors.copy()
     choosedifficulties.place_forget()
     mg.place(x=0,y=0)
     boxes.grid(row=0, column=1, padx=500, pady=150)
-    usedcolors = list()
-    p = ImageTk.PhotoImage(pinkbox.resize((150,150)))
-    b = ImageTk.PhotoImage(blackbox.resize((150,150)))
-    r = ImageTk.PhotoImage(redbox.resize((150,150)))
-    lp = ImageTk.PhotoImage(lightpinkbox.resize((150,150)))
-    y = ImageTk.PhotoImage(yellowbox.resize((150,150)))
-    pur = ImageTk.PhotoImage(purplebox.resize((150,150)))
+
+    box = ImageTk.PhotoImage(emptybox.resize((150,150)))
 
     for _ in range(3):
         chosencolor = random.choice(chamjo)
@@ -168,33 +222,64 @@ def easygame():
     for i in range(3):  
         for j in range(3):
             tmp = random.choice(usedcolors)
-            if tmp == "pink":
-                Label(boxes, image=p, borderwidth=3, relief="solid").grid(row=i, column=j, padx=5, pady=5)
-            elif tmp == "black":
-                Label(boxes, image=b, borderwidth=3, relief="solid").grid(row=i, column=j, padx=5, pady=5)
-            elif tmp == "lightpink":
-                Label(boxes, image=lp, borderwidth=3, relief="solid").grid(row=i, column=j, padx=5, pady=5)
-            elif tmp == "red":
-                Label(boxes, image=r, borderwidth=3, relief="solid").grid(row=i, column=j, padx=5, pady=5)
-            elif tmp == "purple":
-                Label(boxes, image=pur, borderwidth=3, relief="solid").grid(row=i, column=j, padx=5, pady=5)
-            elif tmp == "yellow":
-                Label(boxes, image=y, borderwidth=3, relief="solid").grid(row=i, column=j, padx=5, pady=5)
+            pattern[i][j] = tmp
+            if tmp == "deep pink": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
+            elif tmp == "black": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
+            elif tmp == "hot pink": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
+            elif tmp == "red": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
+            elif tmp == "purple": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
+            elif tmp == "yellow": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
+            elif tmp == "dark green": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
+            elif tmp == "navy": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
+            elif tmp == "cyan": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
 
+    win.after(total_time*1000+500, easygamemain)
+    
 # 노멀 모드
 
+def normalgamemain():
+    pass
+
 def normalgame():
-    global boxcolors
-    chamjo = boxcolors
-    choosedifficulties.place_forget()
-    mg.tkraise()
-    boxes.tkraise()
+    global boxcolors, c, usedcolors, pattern
+
+    pattern = [[0 for _ in range(5)] for _ in range(5)]
+
+    countdownbgm.play()
+    start_timer()
+    boxes.config(width=505, height=505)
+    clock = Label(mg, image=c)
+    clock.place(x=900,y=700)
     usedcolors = list()
 
-    for i in range(5):
+    usedcolors.clear()
+    chamjo = boxcolors.copy()
+    choosedifficulties.place_forget()
+    mg.place(x=0,y=0)
+    boxes.grid(row=0, column=1, padx=500, pady=150)
+
+    box = ImageTk.PhotoImage(emptybox.resize((150,150)))
+
+    for _ in range(3):
         chosencolor = random.choice(chamjo)
         usedcolors.append(chosencolor)
         chamjo.remove(chosencolor)
+    
+    for i in range(3):  
+        for j in range(3):
+            tmp = random.choice(usedcolors)
+            pattern[i][j] = tmp
+            if tmp == "deep pink": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
+            elif tmp == "black": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
+            elif tmp == "hot pink": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
+            elif tmp == "red": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
+            elif tmp == "purple": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
+            elif tmp == "yellow": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
+            elif tmp == "dark green": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
+            elif tmp == "navy": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
+            elif tmp == "cyan": Label(boxes, image=box, borderwidth=3, relief="solid", bg=tmp).grid(row=i, column=j, padx=5, pady=5)
+
+    win.after(total_time*1000+500, easygamemain)
 
 # 하드 모드
 
@@ -222,13 +307,13 @@ def choosingdifficulty():
     choosedifficulties.tkraise()
     
     Label(choosedifficulties, text="난이도를 선택해주세요", bg="white").place(x=600,y=20)
-    easy_label = Button(choosedifficulties, image=easy, cursor="dot", command=easygame)
+    easy_label = Button(choosedifficulties, image=easy, cursor="hand2", command=easygame)
     easy_label.place(x=100, y=150)
     
-    normal_label = Button(choosedifficulties, image=normal, cursor="dot", command=normalgame)
+    normal_label = Button(choosedifficulties, image=normal, cursor="hand2", command=normalgame)
     normal_label.place(x=550, y=150)
     
-    hard_label = Button(choosedifficulties, image=hard, cursor="dot", command=hardgame)
+    hard_label = Button(choosedifficulties, image=hard, cursor="hand2", command=hardgame)
     hard_label.place(x=1000, y=150)
     Label(choosedifficulties, text="이지", font=("함초롬바탕확장", 35), bg="white").place(x=220, y=500)
     Label(choosedifficulties, text="노멀", font=("함초롬바탕확장", 35), bg="white").place(x=700, y=500)
@@ -242,7 +327,8 @@ def choosingdifficulty():
 def tutorial():
     htp.place(x=300,y=40)
     htp.tkraise()
-    Button(htp, image=cancelbutton, bg="gray", command=lambda: htp.place_forget(), cursor="dot").place(x=880, y=30)
+    Label(htp, image=howtoplay).place(x=50,y=50)
+    Button(htp, image=cancelbutton, bg="gray", command=lambda: htp.place_forget(), cursor="hand2").place(x=880, y=30)
 
 # 나가기
 
@@ -293,17 +379,14 @@ def mainScreen():
     ms.place(x=0,y=0)
     ramenBgm.play(-1)
     Label(ms, text="Brain Test", font=("궁서체", 70), bg="white").place(x=100,y=200)
-    Button(ms, text="play", font=("함초롬바탕확장", 30), bg="gray", command=choosingdifficulty, cursor="dot").place(x=100, y=500, width=100, height=70)
-    Button(ms, text="exit", font=("함초롬바탕확장", 30), bg="gray", command=exitProject, cursor="dot").place(x=100, y=600, width=100, height=70)
-    Button(ms, text="how to play", font=("함초롬바탕확장", 30), bg="gray", command=tutorial, cursor="dot").place(x=100, y=700, width=260, height=70)
+    Button(ms, text="play", font=("함초롬바탕확장", 30), bg="gray", command=choosingdifficulty, cursor="hand2").place(x=100, y=500, width=100, height=70)
+    Button(ms, text="exit", font=("함초롬바탕확장", 30), bg="gray", command=exitProject, cursor="hand2").place(x=100, y=600, width=100, height=70)
+    Button(ms, text="how to play", font=("함초롬바탕확장", 30), bg="gray", command=tutorial, cursor="hand2").place(x=100, y=700, width=260, height=70)
 
 win.after(1000, kang.play)
 win.after(3700, kang.stop)
 
-## juseok for test
-# fadein()
-
-fadeout()
+fadein()
 
 # 메인루프
 win.mainloop()
